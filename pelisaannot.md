@@ -17,8 +17,11 @@
 - Everyone will do their part
 - We will help eachother as needed
 - We will follow general ethical practices
+- Always inform other members if you start to do some changes to the project
 
 # Technical rules
 
 1. Commit messages:
 Use descriptive commit messages in English (e.g., Add route for BibTeX export, Fix reference filtering by author).
+2. Writing code:
+Write clear and easy-to-read code following Pylint standards
