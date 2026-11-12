@@ -15,5 +15,5 @@
 - We participate in agreed-upon meetings
 - In case of unavailability, we inform the rest of our teammates
 - Everyone will do their part
-- We will hep eachother as needed
+- We will help eachother as needed
 - We will follow general ethical practices
