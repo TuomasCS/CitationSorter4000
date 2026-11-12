@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Citation Sorter</title>
+  </head>
+  <body>
+    <h1>Welcome to Citation Sorting!</h1>
+
+    {% if references %}
+      <h2>List of your added references</h2>
+      <ul>
+        {% for reference in references %}
+          <li>
+            <a href="/ref/{{ reference.id }}">{{ reference.name }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No references added yet.</p>
+    {% endif %}
+  </body>
+</html>
