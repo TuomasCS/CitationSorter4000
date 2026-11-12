@@ -21,7 +21,7 @@ spec:
           image: app:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 5001
+            - containerPort: 5000
           envFrom:
             - configMapRef:
                 name: config

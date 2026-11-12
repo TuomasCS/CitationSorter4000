@@ -7,7 +7,7 @@ metadata:
 spec:
   host: route-miniprojekti-boilerplate.ext.okd-cs-test-0.k8s.cs.helsinki.fi
   port:
-    targetPort: 5001
+    targetPort: 5000
   to:
     kind: Service
     name: svc
