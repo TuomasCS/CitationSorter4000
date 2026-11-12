@@ -1,0 +1,15 @@
+.venv
+.env
+secret.env
+__pycache__
+*.db
+instance/
+.git
+*.log
+log.html
+output.xml
+report.html
+.github
+manifests/
+kustomization.yaml
+secret.env.template
