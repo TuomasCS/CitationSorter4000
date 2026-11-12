@@ -17,3 +17,8 @@
 - Everyone will do their part
 - We will help eachother as needed
 - We will follow general ethical practices
+
+# Technical rules
+
+1. Commit messages:
+Use descriptive commit messages in English (e.g., Add route for BibTeX export, Fix reference filtering by author).
