@@ -12,8 +12,6 @@ COPY src ./src
 
 EXPOSE 5000
 
-RUN pip install uv && uv sync --frozen
-
 ENV PATH="/app/.venv/bin:$PATH"
 
 CMD ["flask", "--app", "src.app", "run", "--host=0.0.0.0", "--port=5000"]
