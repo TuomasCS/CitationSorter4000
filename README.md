@@ -9,3 +9,7 @@ Definition of done:
 
 Product backlog:
 https://github.com/users/TuomasCS/projects/1
+
+## Deployment
+
+- [OKD deployment instructions](DEPLOYMENT.md)
