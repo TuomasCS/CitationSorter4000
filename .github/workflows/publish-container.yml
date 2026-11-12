@@ -9,7 +9,11 @@ permissions:
   packages: write
 
 jobs:
+  #test:  
+    # testivaiheet
+
   publish:
+    #needs: test
     runs-on: ubuntu-latest
 
     steps:
