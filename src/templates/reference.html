@@ -10,5 +10,6 @@
     <p><strong>Reference type:</strong> {{ reference.type if reference else "Not defined"}}</p>
     <p><strong>Author:</strong> {{ reference.author if reference else "Not defined" }}</p>
     <p><strong>Publish Year:</strong> {{ reference.publish_year if reference else "Not defined" }}</p>
+    <p><strong>URL:</strong> {{ reference.url if reference and reference.url else "Not defined" }}</p>
   </body>
 </html>

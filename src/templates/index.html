@@ -6,6 +6,29 @@
   <body>
     <h1>Welcome to Citation Sorting!</h1>
 
+    <h2>Add a reference</h2>
+    {% if error %}
+      <p role="alert">{{ error }}</p>
+    {% endif %}
+    <form method="post" action="/">
+      <label for="name">Reference title</label>
+      <input id="name" name="name" type="text" value="{{ form_values.get('name', '') }}" required>
+
+      <label for="type">Reference type</label>
+      <input id="type" name="type" type="text" value="{{ form_values.get('type', '') }}">
+
+      <label for="author">Author</label>
+      <input id="author" name="author" type="text" value="{{ form_values.get('author', '') }}">
+
+      <label for="publish_year">Publish year</label>
+      <input id="publish_year" name="publish_year" type="number" step="1" value="{{ form_values.get('publish_year', '') }}">
+
+      <label for="url">URL</label>
+      <input id="url" name="url" type="url" value="{{ form_values.get('url', '') }}">
+
+      <button type="submit">Add reference</button>
+    </form>
+
     {% if references %}
       <h2>List of your added references</h2>
       <ul>
