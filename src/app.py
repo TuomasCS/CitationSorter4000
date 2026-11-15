@@ -1,6 +1,59 @@
+import re
+
 from flask import redirect, render_template, request, url_for
 from config import app
 from db_helper import add_source, get_all_sources, get_source
+
+
+def _escape_bibtex(value): #converts character latex treats differently into safer options
+    replacements = {
+        "\\": r"\textbackslash{}",
+        "&": r"\&",
+        "%": r"\%",
+        "$": r"\$",
+        "#": r"\#",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+        "~": r"\textasciitilde{}",
+        "^": r"\textasciicircum{}",
+    }
+    return re.sub(r"[\\&%$#_{}~^]", lambda match: replacements[match.group()], str(value))
+
+
+def _create_bibtex(reference): # converts the information into bibtex
+    reference_type = (reference.type or "").strip().lower()
+    entry_types = {
+        "article": "article",
+        "book": "book",
+        "conference": "inproceedings",
+        "conference paper": "inproceedings",
+        "journal article": "article",
+        "online": "online",
+        "web page": "online",
+        "webpage": "online",
+        "website": "online",
+    }
+    entry_type = entry_types.get(reference_type, "misc")
+    author = reference.author or ""
+    author_name = author.split(" and ", 1)[0].strip()
+    surname = author_name.split(",", 1)[0] if "," in author_name else author_name.split()[-1] if author_name else ""
+    key_parts = (surname, reference.publish_year, reference.name)
+    citation_key = "".join(re.sub(r"[^A-Za-z0-9]", "", str(part)) for part in key_parts)
+    citation_key = citation_key or "Reference"
+
+    fields = [("title", reference.name)]
+    if author:
+        fields.append(("author", author))
+    if reference.publish_year:
+        fields.append(("year", reference.publish_year))
+    if reference.url:
+        fields.append(("url", reference.url))
+
+    formatted_fields = ",\n".join(
+        f"  {field} = {{{_escape_bibtex(value)}}}" for field, value in fields
+    )
+    return f"@{entry_type}{{{citation_key},\n{formatted_fields}\n}}"
 
 
 @app.route("/")
@@ -50,4 +103,5 @@ def create_reference():
 def show_reference(source_id):
     reference = get_source(source_id)
 
-    return render_template("reference.html", reference=reference)
+    bibtex = _create_bibtex(reference) if reference else None
+    return render_template("reference.html", reference=reference, bibtex=bibtex)

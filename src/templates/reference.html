@@ -11,5 +11,10 @@
     <p><strong>Author:</strong> {{ reference.author if reference else "Not defined" }}</p>
     <p><strong>Publish Year:</strong> {{ reference.publish_year if reference else "Not defined" }}</p>
     <p><strong>URL:</strong> {{ reference.url if reference and reference.url else "Not defined" }}</p>
+
+    {% if reference %}
+      <h2>BibTeX for Overleaf</h2>
+      <pre><code>{{ bibtex }}</code></pre>
+    {% endif %}
   </body>
 </html>
