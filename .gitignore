@@ -4,3 +4,7 @@ __pycache__
 instance/
 secret.env
 .env
+log.html
+output.xml
+playwright-log.txt
+report.html
