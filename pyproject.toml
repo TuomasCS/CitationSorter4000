@@ -10,3 +10,8 @@ dependencies = [
     "pytest>=9.2.0",
     "python-dotenv>=1.2.4",
 ]
+
+[dependency-groups]
+dev = [
+    "robotframework-browser>=21.0.0",
+]
