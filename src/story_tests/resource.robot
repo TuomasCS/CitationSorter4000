@@ -2,7 +2,7 @@
 Library  Browser
 
 *** Variables ***
-${SERVER}     127.0.0.1:5000
+${SERVER}     localhost:5001
 ${DELAY}      500ms
 ${HOME_URL}   http://${SERVER}
 ${RESET_URL}  http://${SERVER}/reset_db
