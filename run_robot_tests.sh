@@ -8,12 +8,12 @@ uv run python src/db_helper.py
 echo "DB setup done"
 
 # käynnistetään Flask-palvelin taustalle
-uv run python3 src/index.py &
+uv run python3 src/app.py &
 
 echo "started Flask server"
 
 # odetetaan, että palvelin on valmiina ottamaan vastaan pyyntöjä
-while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:5001)" != "200" ]];
+while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' 127.0.0.1:5000)" != "200" ]];
   do sleep 1;
 done
 
