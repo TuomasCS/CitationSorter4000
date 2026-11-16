@@ -25,3 +25,4 @@
 Use descriptive commit messages in English (e.g., Add route for BibTeX export, Fix reference filtering by author).
 2. Writing code:
 Write clear and easy-to-read code following Pylint standards
+3. AI usage: Use AI cautiously and in a controlled manner.
