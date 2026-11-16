@@ -4,8 +4,8 @@ import unittest
 each time we commit something"""
 
 class Tests(unittest.TestCase):
-    def temptest(self):
+    def test_temp(self):
         self.assertEqual(1, 1)
 
 if __name__ == "__main__":
-            unittest.main()
+    unittest.main()
