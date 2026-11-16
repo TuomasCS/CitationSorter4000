@@ -105,3 +105,6 @@ def show_reference(source_id):
 
     bibtex = _create_bibtex(reference) if reference else None
     return render_template("reference.html", reference=reference, bibtex=bibtex)
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=5001)
