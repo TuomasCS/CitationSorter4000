@@ -24,7 +24,7 @@ uv run robot --variable HEADLESS:true src/story_tests
 
 status=$?
 
-# pysäytetään Flask-palvelin portissa 5001
-kill $(lsof -t -i:5001)
+# pysäytetään Flask-palvelin portissa 5000
+kill $(lsof -t -i:5000)
 
 exit $status
