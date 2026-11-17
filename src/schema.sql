@@ -7,12 +7,14 @@ CREATE TABLE sources (
     author TEXT,
     editor TEXT,
     organization TEXT,
+    school TEXT,
+    publisher TEXT,
 
     publish_year INTEGER,
     publication_date TEXT,
     access_date TEXT,
+    howpublished TEXT,
 
-    publisher TEXT,
 
     journal TEXT,
     booktitle TEXT,
@@ -21,6 +23,7 @@ CREATE TABLE sources (
     issue TEXT,
     chapter TEXT,
     pages TEXT,
+    series TEXT,
 
     doi TEXT,
     isbn TEXT,
