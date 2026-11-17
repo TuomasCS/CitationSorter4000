@@ -1,5 +1,9 @@
 name: CI
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   DATABASE_URL: sqlite:///test.db
   TEST_ENV: true
@@ -17,16 +21,44 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.14'
           enable-cache: true
+
       - name: Install dependencies
         run: uv sync
+
       - name: Run unit tests
         run: uv run pytest src/tests
+
       - name: Install Playwright browser
         run: uv run rfbrowser install --with-deps chromium
+
       - name: Run robot tests
         run: bash run_robot_tests.sh
+
+  publish:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/tuomascs/citationsorter4000:latest
