@@ -1,8 +1,8 @@
 import re
 
 from flask import redirect, render_template, request, url_for
-from config import app
-from db_helper import add_source, get_all_sources, get_source
+from src.config import app
+from src.db_helper import add_source, get_all_sources, get_source
 
 
 def _escape_bibtex(value): #converts character latex treats differently into safer options

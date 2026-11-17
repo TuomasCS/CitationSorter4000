@@ -1,4 +1,4 @@
-from config import db, app
+from src.config import db, app
 from sqlalchemy import inspect, text
 import os
 
