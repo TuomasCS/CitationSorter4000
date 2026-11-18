@@ -27,8 +27,8 @@ def get_source(source_id):
    sql = """SELECT name, type, author, publish_year, url
             FROM sources
             WHERE id = :source_id"""
-   result = db.session.execute(text(sql), {"source_id":source_id}).fetchall()
-   return result[0] if result else None
+   result = db.session.execute(text(sql), {"source_id":source_id})
+   return result.mappings().first() if result else None
 
 
 def add_source(name, source_type, author, publish_year, url):
