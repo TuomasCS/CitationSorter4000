@@ -5,11 +5,37 @@
   </head>
   <body>
     <h1>Add reference</h1>
-    <label for="reference_type">Reference type:</label>
-    <select id ="reference_type" name="type" required>
-        <option value="">Select a reference type</option>
-        {% for type in entry_types %}
-        <option value="{{ type }}">{{ type }}</option>
-        {% endfor %}
-    </select>
+    {% if error %}
+      <p role="alert">{{ error }}</p>
+    {% endif %}
+    <form method="GET" action="/create">
+      <label for="reference_type">Reference type:</label>
+      <select id ="reference_type" name="type" required onchange="this.form.requestSubmit()">
+          <option value="">Select a reference type</option>
+          {% for type in entry_types %}
+          {% if type == type_input %}
+          <option value="{{ type }}" selected>{{ type }}</option>
+          {% else %}
+          <option value="{{ type }}">{{ type }}</option>
+          {% endif %}
+          {% endfor %}
+      </select>
+    </form>
+    {% if fields %}
+    <form method="POST" action="/create">
+      <input type="hidden" name="type" value="{{ type_input }}">
+      {% for field in fields.required %}
+        <label for="{{ field }}">{{ field | field_label }}</label>
+        <input type="text" id="{{ field }}" name="{{ field }}" value="{{ form_values.get(field, '')}}" required>
+      {% endfor %}
+
+      {% for field in fields.optional %}
+        <label for="{{ field }}">{{ field | field_label }}</label>
+        <input type="text" id="{{ field }}" name="{{ field }}" value="{{ form_values.get(field, '')}}">
+      {% endfor %}
+
+      <button type="submit">Add Reference</button>
+    </form>
+    {% endif %}
+
   </body>

@@ -99,13 +99,31 @@ def create_reference():
 
 @app.route("/create", methods=["GET","POST"])
 def add_reference():
-    type = request.args.get("type")
+    type_input = request.args.get("type")
+
+    entry_types = ENTRY_TYPE_ALIASES
+    entry = ENTRY_TYPE_ALIASES[type_input] if type_input else None
+    fields = REFERENCE_FIELD_SCHEMAS[entry] if entry else None
+    form_values = request.form if request.method == "POST" else {}
+
     if request.method == "GET":
-        if not type:
-            entry_types = ENTRY_TYPE_ALIASES
-            return render_template("add_reference.html", entry_types=entry_types)
-        else:
-            return render_template("add_reference.html", entry_types={"a":"a","b":"b"})
+        return render_template(
+            "add_reference.html",
+            type_input=type_input,
+            entry_types=entry_types,
+            fields = fields,
+            form_values=form_values
+        )
+
+    add_source(
+        form_values.get("name", "").strip(),
+        form_values.get("type", "").strip(),
+        form_values.get("author", "").strip(),
+        form_values.get("publish_year", "").strip(),
+        form_values.get("url", "").strip(),
+    )
+    return redirect(url_for("index"))
+
 
 @app.route("/ref/<int:source_id>")
 def show_reference(source_id):
