@@ -3,7 +3,11 @@ import re
 from flask import redirect, render_template, request, url_for
 from src.config import app
 from src.db_helper import add_source, get_all_sources, get_source
-
+from src.reference_config import (
+    REFERENCE_FIELD_SCHEMAS,
+    ENTRY_TYPE_ALIASES,
+    FIELD_LABELS
+)
 
 def _escape_bibtex(value): #converts character latex treats differently into safer options
     replacements = {
@@ -23,18 +27,8 @@ def _escape_bibtex(value): #converts character latex treats differently into saf
 
 def _create_bibtex(reference): # converts the information into bibtex
     reference_type = (reference.type or "").strip().lower()
-    entry_types = {
-        "article": "article",
-        "book": "book",
-        "conference": "inproceedings",
-        "conference paper": "inproceedings",
-        "journal article": "article",
-        "online": "online",
-        "web page": "online",
-        "webpage": "online",
-        "website": "online",
-    }
-    entry_type = entry_types.get(reference_type, "misc")
+
+    entry_type = ENTRY_TYPE_ALIASES.get(reference_type, "misc")
     author = reference.author or ""
     author_name = author.split(" and ", 1)[0].strip()
     surname = author_name.split(",", 1)[0] if "," in author_name else author_name.split()[-1] if author_name else ""
@@ -55,6 +49,11 @@ def _create_bibtex(reference): # converts the information into bibtex
     )
     return f"@{entry_type}{{{citation_key},\n{formatted_fields}\n}}"
 
+@app.template_filter("field_label")
+def field_label(column):
+    labels = FIELD_LABELS
+
+    return labels.get(column, column)
 
 @app.route("/")
 def index():
@@ -98,6 +97,15 @@ def create_reference():
     )
     return redirect(url_for("index"))
 
+@app.route("/create", methods=["GET","POST"])
+def add_reference():
+    type = request.args.get("type")
+    if request.method == "GET":
+        if not type:
+            entry_types = ENTRY_TYPE_ALIASES
+            return render_template("add_reference.html", entry_types=entry_types)
+        else:
+            return render_template("add_reference.html", entry_types={"a":"a","b":"b"})
 
 @app.route("/ref/<int:source_id>")
 def show_reference(source_id):
