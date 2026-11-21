@@ -1,5 +1,9 @@
 # CitationSorter4000
 
+On the main page, choose how to sort references by author, page count, type, or
+publication year. Page ranges such as `10--15` are sorted by their number of
+pages; references without a value for the selected criterion appear last.
+
 Definition of done:
 
 1. Functionality: The feature works according to requirements without fatal errors.

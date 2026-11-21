@@ -13,6 +13,16 @@
     <h2>Add a reference</h2>
     <a href="/create" role="button">Add reference</a>
 
+    <form method="get" action="/">
+      <label for="sort">Sort references by:</label>
+      <select id="sort" name="sort">
+        {% for option, label in sort_options.items() %}
+          <option value="{{ option }}" {% if option == sort_by %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">Sort</button>
+    </form>
+
     {% if references %}
       <h2>List of your added references</h2>
       <ul>

@@ -53,7 +53,7 @@ def add_source(values):
 
 
 def get_all_sources():
-   sql = """SELECT id, name
+   sql = """SELECT id, name, type, author, publish_year, pages
             FROM sources
             ORDER BY id ASC"""
    return db.session.execute(text(sql)).fetchall()

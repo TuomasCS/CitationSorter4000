@@ -86,8 +86,87 @@ class FlaskRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_data(as_text=True), "index rendered")
         render.assert_called_once_with(
-            "index.html", references=references, form_values={}
+            "index.html",
+            references=references,
+            form_values={},
+            sort_options=app_module.SORT_OPTIONS,
+            sort_by="default",
         )
+
+    def test_index_sorts_references_by_author_and_keeps_missing_authors_last(self):
+        references = [
+            ReferenceData(id=1, name="Z", author="Zoe"),
+            ReferenceData(id=2, name="No author", author=""),
+            ReferenceData(id=3, name="A", author="Ada"),
+        ]
+        with patch.object(app_module, "get_all_sources", return_value=references), patch.object(
+            app_module, "render_template", return_value="index rendered"
+        ) as render:
+            response = self.client.get("/", query_string={"sort": "author_asc"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [reference.name for reference in render.call_args.kwargs["references"]],
+            ["A", "Z", "No author"],
+        )
+        self.assertEqual(render.call_args.kwargs["sort_by"], "author_asc")
+
+    def test_sort_references_handles_page_ranges_and_invalid_sort(self):
+        references = [
+            ReferenceData(name="Long", pages="12--20"),
+            ReferenceData(name="Short", pages="3-5"),
+            ReferenceData(name="Unknown", pages=""),
+        ]
+
+        sorted_references, selected_sort = app_module._sort_references(
+            references, "page_count_asc"
+        )
+        self.assertEqual(
+            [reference.name for reference in sorted_references],
+            ["Short", "Long", "Unknown"],
+        )
+        self.assertEqual(selected_sort, "page_count_asc")
+
+        unchanged_references, selected_sort = app_module._sort_references(
+            references, "unknown"
+        )
+        self.assertIs(unchanged_references, references)
+        self.assertEqual(selected_sort, "default")
+
+    def test_sort_references_supports_all_criteria_and_directions(self):
+        references = [
+            ReferenceData(name="Middle", author="Mira", type="Book", pages="10-12", publish_year=2000),
+            ReferenceData(name="Newest", author="Zoe", type="Article", pages="1-20", publish_year=2024),
+            ReferenceData(name="Oldest", author="Ada", type="Website", pages="2", publish_year=1980),
+        ]
+        expected_orders = {
+            "author_desc": ["Newest", "Middle", "Oldest"],
+            "page_count_desc": ["Newest", "Middle", "Oldest"],
+            "type_asc": ["Newest", "Middle", "Oldest"],
+            "year_asc": ["Oldest", "Middle", "Newest"],
+            "year_desc": ["Newest", "Middle", "Oldest"],
+        }
+
+        for sort_by, expected in expected_orders.items():
+            with self.subTest(sort_by=sort_by):
+                sorted_references, selected_sort = app_module._sort_references(
+                    references, sort_by
+                )
+                self.assertEqual(
+                    [reference.name for reference in sorted_references], expected
+                )
+                self.assertEqual(selected_sort, sort_by)
+
+    def test_index_renders_sort_control_and_selects_requested_sort(self):
+        references = [ReferenceData(id=1, name="Example", author="Ada")]
+        with patch.object(app_module, "get_all_sources", return_value=references):
+            response = self.client.get("/", query_string={"sort": "author_asc"})
+
+        html = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('name="sort"', html)
+        self.assertIn('<option value="author_asc" selected>', html)
+        self.assertIn("Page count (fewest first)", html)
 
     def test_create_reference_rejects_missing_title(self):
         form = {"name": "   ", "type": "Article", "author": "Ada Lovelace"}

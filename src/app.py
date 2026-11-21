@@ -10,6 +10,69 @@ from src.reference_config import (
     FIELD_LABELS
 )
 
+SORT_OPTIONS = {
+    "default": "Added order",
+    "author_asc": "Author (A to Z)",
+    "author_desc": "Author (Z to A)",
+    "page_count_asc": "Page count (fewest first)",
+    "page_count_desc": "Page count (most first)",
+    "type_asc": "Reference type (A to Z)",
+    "year_asc": "Reference year (oldest first)",
+    "year_desc": "Reference year (newest first)",
+}
+
+
+def _page_count(pages):
+    if pages is None:
+        return None
+
+    value = str(pages).strip()
+    if re.fullmatch(r"[0-9]+", value):
+        return int(value)
+
+    page_range = re.fullmatch(r"([0-9]+)\s*(?:--?|[–—])\s*([0-9]+)", value)
+    if page_range:
+        start, end = (int(page) for page in page_range.groups())
+        return abs(end - start) + 1
+    return None
+
+
+def _sort_references(references, sort_by):
+    if sort_by not in SORT_OPTIONS or sort_by == "default":
+        return references, "default"
+
+    sort_config = {
+        "author_asc": ("author", False, lambda value: value.casefold()),
+        "author_desc": ("author", True, lambda value: value.casefold()),
+        "page_count_asc": ("pages", False, _page_count),
+        "page_count_desc": ("pages", True, _page_count),
+        "type_asc": ("type", False, lambda value: value.casefold()),
+        "year_asc": ("publish_year", False, int),
+        "year_desc": ("publish_year", True, int),
+    }
+    column, reverse, convert = sort_config[sort_by]
+    present = []
+    missing = []
+
+    for reference in references:
+        value = getattr(reference, column, None)
+        if value is None or not str(value).strip():
+            missing.append(reference)
+            continue
+        try:
+            key = convert(value)
+        except ValueError:
+            missing.append(reference)
+            continue
+        if key is None:
+            missing.append(reference)
+        else:
+            present.append((key, reference))
+
+    present.sort(key=lambda item: item[0], reverse=reverse)
+    return [reference for _, reference in present] + missing, sort_by
+
+
 def _escape_bibtex(value): #converts character latex treats differently into safer options
     replacements = {
         "\\": r"\textbackslash{}",
@@ -57,9 +120,17 @@ def field_label(column):
 
 @app.route("/")
 def index():
-    references = get_all_sources()
+    references, sort_by = _sort_references(
+        get_all_sources(), request.args.get("sort", "default")
+    )
 
-    return render_template("index.html", references=references, form_values={})
+    return render_template(
+        "index.html",
+        references=references,
+        form_values={},
+        sort_options=SORT_OPTIONS,
+        sort_by=sort_by,
+    )
 
 @app.route("/create", methods=["GET", "POST"])
 def add_reference():
