@@ -13,14 +13,14 @@ ${BOOK_URL}       https://example.com/clean-code
 
 *** Test Cases ***
 User Can Add A Book Reference To The System
-    Go To Home Page
+    Go To Create Page
     Fill Book Reference Form
     Submit Reference Form
     Book Reference Should Be Visible In Reference List
 
 *** Keywords ***
-Go To Home Page
-    Go To    ${HOME_URL}
+Go To Create Page
+    Go To    ${CREATE_URL}
     Wait For Elements State    form    visible
 
 Fill Book Reference Form

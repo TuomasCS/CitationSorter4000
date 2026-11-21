@@ -6,6 +6,7 @@ ${SERVER}     localhost:5000
 ${DELAY}      500ms
 ${HOME_URL}   http://${SERVER}
 ${RESET_URL}  http://${SERVER}/reset_db
+${CREATE_URL}  http://${SERVER}/create
 ${BROWSER}    chromium
 ${HEADLESS}   false
 
