@@ -13,9 +13,9 @@ REFERENCE_FIELD_SCHEMAS = {
     },
 
     "booklet": {
-        "required": ["name"],
+        "required": ["name", "author"],
         "optional": [
-            "author", "howpublished",
+            "howpublished",
             "publication_date", "publish_year"
         ]
     },
@@ -45,9 +45,9 @@ REFERENCE_FIELD_SCHEMAS = {
     },
 
     "manual": {
-        "required": ["name"],
+        "required": ["name", "author"],
         "optional": [
-            "author", "organization", "publish_year"
+            "organization", "publish_year"
         ]
     },
 
@@ -59,9 +59,9 @@ REFERENCE_FIELD_SCHEMAS = {
     },
 
     "misc": {
-        "required": ["name"],
+        "required": ["name", "author"],
         "optional": [
-            "author", "howpublished",
+            "howpublished",
             "publish_year", "note"
         ]
     },
@@ -74,7 +74,7 @@ REFERENCE_FIELD_SCHEMAS = {
     },
 
     "proceedings": {
-        "required": ["name"],
+        "required": ["name", "author"],
         "optional": [
             "editor", "series", "volume",
             "publisher", "publish_year"
@@ -95,10 +95,10 @@ REFERENCE_FIELD_SCHEMAS = {
     },
 
     "online": {
-        "required": ["name"],
+        "required": ["name", "author"],
         "optional": [
-            "author", "url", "organization",
-            "publish_year", "access_date"
+            "publish_year", "organization",
+            "url", "access_date"
         ]
     }
 }
@@ -133,13 +133,13 @@ FIELD_LABELS = {
         "school": "School",
         "publisher": "Publisher",
 
-        "publish_year": "Publication Year",
-        "publication_date": "Publication Date",
-        "access_date": "Access Date",
-        "howpublished": "How Published",
+        "publish_year": "Year",
+        "publication_date": "Date",
+        "access_date": "URLDate",
+        "howpublished": "HowPublished",
 
         "journal": "Journal",
-        "booktitle": "Book Title",
+        "booktitle": "BookTitle",
         "volume": "Volume",
         "number": "Number",
         "issue": "Issue",

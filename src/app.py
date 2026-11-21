@@ -27,7 +27,7 @@ def _escape_bibtex(value): #converts character latex treats differently into saf
 
 
 def _create_bibtex(reference): # converts the information into bibtex
-    reference_type = (reference.type or "").strip().lower()
+    reference_type = (reference.type or "").strip()
 
     entry_type = ENTRY_TYPE_ALIASES.get(reference_type, "misc")
     author = reference.author or ""
@@ -37,13 +37,12 @@ def _create_bibtex(reference): # converts the information into bibtex
     citation_key = "".join(re.sub(r"[^A-Za-z0-9]", "", str(part)) for part in key_parts)
     citation_key = citation_key or "Reference"
 
-    fields = [("title", reference.name)]
-    if author:
-        fields.append(("author", author))
-    if reference.publish_year:
-        fields.append(("year", reference.publish_year))
-    if reference.url:
-        fields.append(("url", reference.url))
+    columns = REFERENCE_FIELD_SCHEMAS[entry_type]["required"] + REFERENCE_FIELD_SCHEMAS[entry_type]["optional"]
+    fields = []
+
+    for col in columns:
+        if reference[col]:
+            fields.append((field_label(col).lower(), reference[col]))
 
     formatted_fields = ",\n".join(
         f"  {field} = {{{_escape_bibtex(value)}}}" for field, value in fields
@@ -107,7 +106,6 @@ def add_reference():
         if error is None:
             flash("Reference has beeen successfully added")
             add_source(form_values)
-            print(form_values)
             return redirect(url_for("index"))
 
     return render_template(
@@ -125,8 +123,9 @@ def show_reference(source_id):
     reference = get_source(source_id)
     type = ENTRY_TYPE_ALIASES[reference.type]
     fields = REFERENCE_FIELD_SCHEMAS[type]["required"] + REFERENCE_FIELD_SCHEMAS[type]["optional"]
+
     bibtex = _create_bibtex(reference) if reference else None
-    return render_template("reference.html", reference=reference, bibtex=bibtex, fields=fields)
+    return render_template("reference.html", reference=reference, bibtex=bibtex, fields=fields+['type'])
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)
