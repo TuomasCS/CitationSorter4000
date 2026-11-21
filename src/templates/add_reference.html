@@ -24,14 +24,24 @@
     {% if fields %}
     <form method="POST" action="/create">
       <input type="hidden" name="type" value="{{ type_input }}">
-      {% for field in fields.required %}
+      {% for field in fields.required + fields.optional %}
         <label for="{{ field }}">{{ field | field_label }}</label>
-        <input type="text" id="{{ field }}" name="{{ field }}" value="{{ form_values.get(field, '')}}" required>
-      {% endfor %}
-
-      {% for field in fields.optional %}
-        <label for="{{ field }}">{{ field | field_label }}</label>
-        <input type="text" id="{{ field }}" name="{{ field }}" value="{{ form_values.get(field, '')}}">
+        <input
+          id="{{ field }}"
+          name="{{ field }}"
+          value="{{ form_values.get(field, '') }}"
+          {% if field == 'publish_year' %}
+            type="text" inputmode="numeric" pattern="[0-9]{1,4}"
+            title="Enter a year using one to four digits"
+          {% elif field == 'url' %}
+            type="url"
+          {% elif field == 'access_date' %}
+            type="date"
+          {% else %}
+            type="text"
+          {% endif %}
+          {% if field in fields.required %}required{% endif %}
+        >
       {% endfor %}
 
       <button type="submit">Add Reference</button>
