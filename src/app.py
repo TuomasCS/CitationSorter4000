@@ -1,6 +1,7 @@
 import re
+from urllib.parse import urlsplit
 
-from flask import redirect, render_template, request, url_for
+from flask import redirect, render_template, request, url_for, flash
 from src.config import app
 from src.db_helper import add_source, get_all_sources, get_source
 from src.reference_config import (
@@ -61,76 +62,71 @@ def index():
 
     return render_template("index.html", references=references, form_values={})
 
-
-@app.route("/", methods=["POST"])
-def create_reference():
-    form_values = request.form
-    name = form_values.get("name", "").strip()
-    publish_year_value = form_values.get("publish_year", "").strip()
+@app.route("/create", methods=["GET", "POST"])
+def add_reference():
+    is_post = request.method == "POST"
+    form_values = request.form if is_post else {}
+    type_values = form_values if is_post else request.args
+    type_input = type_values.get("type", "").strip()
+    entry = ENTRY_TYPE_ALIASES.get(type_input)
+    fields = REFERENCE_FIELD_SCHEMAS.get(entry)
     error = None
 
-    if not name:
-        error = "Reference title is required."
-    elif publish_year_value:
-        try:
-            publish_year = int(publish_year_value)
-        except ValueError:
-            error = "Publish year must be a whole number."
-            publish_year = None
-    else:
-        publish_year = None
+    if fields is None:
+        if is_post or type_input:
+            error = "Select a valid reference type."
+    elif is_post:
+        values = {
+            field: form_values.get(field, "").strip()
+            for field in fields["required"] + fields["optional"]
+        }
+        missing = [
+            field_label(field) for field in fields["required"] if not values[field]
+        ]
+        year = values.get("publish_year", "")
+        url = values.get("url", "")
 
-    if error:
-        return render_template(
-            "index.html",
-            references=get_all_sources(),
-            form_values=form_values,
-            error=error,
-        ), 400
+        if missing:
+            error = f"Required fields: {', '.join(missing)}."
+        elif year and not re.fullmatch(r"[0-9]{1,4}", year):
+            error = "Publication year must contain one to four digits."
+        elif url:
+            try:
+                parsed = urlsplit(url)
+                valid_url = (
+                    parsed.scheme in {"http", "https"}
+                    and bool(parsed.hostname)
+                    and parsed.port != 0
+                    and not any(char.isspace() or ord(char) < 32 for char in url)
+                )
+            except ValueError:
+                valid_url = False
+            if not valid_url:
+                error = "Enter a valid HTTP or HTTPS URL."
 
-    add_source(
-        name,
-        form_values.get("type", "").strip(),
-        form_values.get("author", "").strip(),
-        publish_year,
-        form_values.get("url", "").strip(),
-    )
-    return redirect(url_for("index"))
+        if error is None:
+            flash("Reference has beeen successfully added")
+            add_source(form_values)
+            print(form_values)
+            return redirect(url_for("index"))
 
-@app.route("/create", methods=["GET","POST"])
-def add_reference():
-    type_input = request.args.get("type")
-
-    entry_types = ENTRY_TYPE_ALIASES
-    entry = ENTRY_TYPE_ALIASES[type_input] if type_input else None
-    fields = REFERENCE_FIELD_SCHEMAS[entry] if entry else None
-    form_values = request.form if request.method == "POST" else {}
-
-    if request.method == "GET":
-        return render_template(
-            "add_reference.html",
-            type_input=type_input,
-            entry_types=entry_types,
-            fields = fields,
-            form_values=form_values
-        )
-
-    add_source(
-        form_values.get("name", "").strip(),
-        form_values.get("type", "").strip(),
-        form_values.get("author", "").strip(),
-        form_values.get("publish_year", "").strip(),
-        form_values.get("url", "").strip(),
-    )
-    return redirect(url_for("index"))
+    return render_template(
+        "add_reference.html",
+        type_input=type_input,
+        entry_types=ENTRY_TYPE_ALIASES,
+        fields=fields,
+        form_values=form_values,
+        error=error,
+    ), 400 if error else 200
 
 
 @app.route("/ref/<int:source_id>")
 def show_reference(source_id):
     reference = get_source(source_id)
-
+    type = ENTRY_TYPE_ALIASES[reference.type]
+    fields = REFERENCE_FIELD_SCHEMAS[type]["required"] + REFERENCE_FIELD_SCHEMAS[type]["optional"]
     bibtex = _create_bibtex(reference) if reference else None
-    return render_template("reference.html", reference=reference, bibtex=bibtex)
+    return render_template("reference.html", reference=reference, bibtex=bibtex, fields=fields)
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)

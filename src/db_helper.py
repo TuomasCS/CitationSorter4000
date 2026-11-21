@@ -5,13 +5,6 @@ import sqlite3
 from contextlib import closing
 
 
-def ensure_url_column():
-   columns = inspect(db.engine).get_columns("sources")
-   if not any(column["name"] == "url" for column in columns):
-      db.session.execute(text("ALTER TABLE sources ADD COLUMN url TEXT"))
-      db.session.commit()
-
-
 def setup_db():
    """Create the sources table or add missing nullable columns, preserving data."""
    schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
@@ -41,28 +34,21 @@ def setup_db():
 
 
 def get_source(source_id):
-   ensure_url_column()
-   sql = """SELECT name, type, author, publish_year, url
+   sql = """SELECT *
             FROM sources
             WHERE id = :source_id"""
    result = db.session.execute(text(sql), {"source_id":source_id})
    return result.mappings().first() if result else None
 
 
-def add_source(name, source_type, author, publish_year, url):
-   ensure_url_column()
-   sql = """INSERT INTO sources (name, type, author, publish_year, url)
-            VALUES (:name, :type, :author, :publish_year, :url)"""
-   db.session.execute(
-      text(sql),
-      {
-         "name": name,
-         "type": source_type,
-         "author": author,
-         "publish_year": publish_year,
-         "url": url,
-      },
-   )
+def add_source(values):
+   sub_sql_1 = ", ".join(values.keys())
+   sub_sql_2 = ", ".join([f":{val}" for val in values.keys()])
+
+   sql = f"""INSERT INTO sources ({sub_sql_1})
+            VALUES ({sub_sql_2})"""
+   
+   db.session.execute(text(sql), values)
    db.session.commit()
 
 

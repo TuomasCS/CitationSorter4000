@@ -9,7 +9,7 @@ REFERENCE_FIELD_SCHEMAS = {
 
     "book": {
         "required": ["name", "author"],
-        "optional": ["publisher", "publish_year"]
+        "optional": ["publisher", "publish_year", "chapter"]
     },
 
     "booklet": {
