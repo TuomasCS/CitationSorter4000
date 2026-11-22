@@ -1,9 +1,16 @@
 import re
 from urllib.parse import urlsplit
 
-from flask import redirect, render_template, request, url_for, flash
+from flask import abort, redirect, render_template, request, url_for, flash
 from src.config import app
-from src.db_helper import add_source, get_all_sources, get_source
+from src.db_helper import (
+    add_source,
+    get_all_sources,
+    get_source,
+    hide_source,
+    update_source,
+    setup_db,
+)
 from src.reference_config import (
     REFERENCE_FIELD_SCHEMAS,
     ENTRY_TYPE_ALIASES,
@@ -118,6 +125,44 @@ def field_label(column):
 
     return labels.get(column, column)
 
+def _entry_for_type(type_input):
+    if type_input in ENTRY_TYPE_ALIASES:
+        return ENTRY_TYPE_ALIASES[type_input]
+    if type_input in REFERENCE_FIELD_SCHEMAS:
+        return type_input
+    return None
+
+
+def _validate_reference(values, fields):
+    missing = [
+        field_label(field)
+        for field in fields["required"]
+        if not values[field]
+    ]
+    if missing:
+        return f"Required fields: {', '.join(missing)}."
+
+    year = values.get("publish_year", "")
+    if year and not re.fullmatch(r"[0-9]{1,4}", year):
+        return "Publication year must contain one to four digits."
+
+    url = values.get("url", "")
+    if url:
+        try:
+            parsed = urlsplit(url)
+            valid_url = (
+                parsed.scheme in {"http", "https"}
+                and bool(parsed.hostname)
+                and parsed.port != 0
+                and not any(char.isspace() or ord(char) < 32 for char in url)
+            )
+        except ValueError:
+            valid_url = False
+        if not valid_url:
+            return "Enter a valid HTTP or HTTPS URL."
+    return None
+
+
 @app.route("/")
 def index():
     references, sort_by = _sort_references(
@@ -189,14 +234,79 @@ def add_reference():
     ), 400 if error else 200
 
 
+@app.route("/ref/<int:source_id>/edit", methods=["GET", "POST"])
+def edit_reference(source_id):
+    reference = get_source(source_id)
+    if reference is None:
+        abort(404)
+
+    entry = _entry_for_type(reference["type"])
+    if entry is None:
+        abort(404)
+    fields = REFERENCE_FIELD_SCHEMAS[entry]
+
+    is_post = request.method == "POST"
+    form_values = request.form if is_post else {
+        field: reference.get(field, "")
+        for field in fields["required"] + fields["optional"]
+    }
+    type_input = request.form.get("type", reference["type"] if is_post else reference["type"])
+
+    error = None
+    if is_post:
+        entry = _entry_for_type(type_input)
+        if entry is None:
+            error = "Select a valid reference type."
+        else:
+            fields = REFERENCE_FIELD_SCHEMAS[entry]
+            values = {
+                field: request.form.get(field, "").strip()
+                for field in fields["required"] + fields["optional"]
+            }
+            values["type"] = type_input
+            error = _validate_reference(values, fields)
+
+            if error is None:
+                update_source(source_id, values)
+                flash("Reference has been successfully updated")
+                return redirect(url_for("show_reference", source_id=source_id))
+
+    return render_template(
+        "edit_reference.html",
+        reference=reference,
+        type_input=type_input,
+        entry_types=ENTRY_TYPE_ALIASES,
+        fields=fields,
+        form_values=form_values,
+        error=error,
+    ), 400 if error else 200
+
+
+@app.route("/ref/<int:source_id>/delete", methods=["POST"])
+def delete_reference(source_id):
+    reference = get_source(source_id)
+    if reference is None:
+        abort(404)
+    hide_source(source_id)
+    flash("Reference has been hidden and can still be recovered")
+    return redirect(url_for("index"))
+
+
 @app.route("/ref/<int:source_id>")
 def show_reference(source_id):
     reference = get_source(source_id)
-    type = ENTRY_TYPE_ALIASES[reference.type]
-    fields = REFERENCE_FIELD_SCHEMAS[type]["required"] + REFERENCE_FIELD_SCHEMAS[type]["optional"]
+    if reference is None:
+        abort(404)
+    entry = _entry_for_type(reference["type"])
+    if entry is None:
+        abort(404)
+    fields = REFERENCE_FIELD_SCHEMAS[entry]["required"] + REFERENCE_FIELD_SCHEMAS[entry]["optional"]
 
-    bibtex = _create_bibtex(reference) if reference else None
+    bibtex = _create_bibtex(reference)
     return render_template("reference.html", reference=reference, bibtex=bibtex, fields=fields+['type'])
+
+with app.app_context():
+    setup_db()
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)

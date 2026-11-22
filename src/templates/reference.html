@@ -11,5 +11,12 @@
 
     <h2>BibTeX for Overleaf</h2>
     <pre><code>{{ bibtex }}</code></pre>
+
+    <p>
+      <a href="/ref/{{ reference.id }}/edit" role="button">Edit reference</a>
+    </p>
+    <form method="POST" action="/ref/{{ reference.id }}/delete">
+      <button type="submit" onclick="return confirm('Hide this reference? It can be recovered from the database.');">Delete reference</button>
+    </form>
   </body>
 </html>

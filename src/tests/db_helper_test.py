@@ -191,6 +191,40 @@ class SourceQueryTests(DbHelperTests):
         self.assertIn("ORDER BY id ASC", sql)
         mock_execute.assert_called_once()
 
+    @patch("src.db_helper.db.session.commit")
+    @patch("src.db_helper.db.session.execute")
+    def test_update_source_updates_whitelisted_fields_and_commits(
+        self, mock_execute, mock_commit
+    ):
+        db_helper.update_source(7, {
+            "name": "Updated title",
+            "author": "Updated author",
+            "unexpected": "ignored",
+        })
+
+        sql = str(mock_execute.call_args.args[0])
+        self.assertIn("UPDATE sources SET", sql)
+        self.assertIn("name = :name", sql)
+        self.assertIn("author = :author", sql)
+        self.assertNotIn("unexpected", sql)
+        parameters = mock_execute.call_args.args[1]
+        self.assertEqual(parameters["source_id"], 7)
+        self.assertEqual(parameters["name"], "Updated title")
+        mock_commit.assert_called_once_with()
+
+    @patch("src.db_helper.db.session.commit")
+    @patch("src.db_helper.db.session.execute")
+    def test_hide_source_soft_deletes_instead_of_removing_row(
+        self, mock_execute, mock_commit
+    ):
+        db_helper.hide_source(7)
+
+        sql = str(mock_execute.call_args.args[0])
+        self.assertIn("SET hidden = 1", sql)
+        self.assertIn("WHERE id = :source_id", sql)
+        self.assertEqual(mock_execute.call_args.args[1], {"source_id": 7})
+        mock_commit.assert_called_once_with()
+
 
 if __name__ == "__main__":
     unittest.main()

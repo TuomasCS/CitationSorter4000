@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Edit reference</title>
+  </head>
+  <body>
+    <h1>Edit reference</h1>
+    {% if error %}
+      <p role="alert">{{ error }}</p>
+    {% endif %}
+    <form method="POST" action="/ref/{{ reference.id }}/edit">
+      <input type="hidden" name="type" value="{{ type_input }}">
+      {% for field in fields.required + fields.optional %}
+        <label for="{{ field }}">{{ field | field_label }}</label>
+        <input
+          id="{{ field }}"
+          name="{{ field }}"
+          value="{{ form_values.get(field, '') }}"
+          {% if field == 'publish_year' %}
+            type="text" inputmode="numeric" pattern="[0-9]{1,4}"
+            title="Enter a year using one to four digits"
+          {% elif field == 'url' %}
+            type="url"
+          {% elif field == 'access_date' %}
+            type="date"
+          {% else %}
+            type="text"
+          {% endif %}
+          {% if field in fields.required %}required{% endif %}
+        >
+      {% endfor %}
+      <button type="submit">Save changes</button>
+    </form>
+    <p><a href="/ref/{{ reference.id }}">Cancel</a></p>
+  </body>
+</html>

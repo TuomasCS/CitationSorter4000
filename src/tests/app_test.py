@@ -9,6 +9,9 @@ class ReferenceData(SimpleNamespace):
     def __getitem__(self, column):
         return getattr(self, column, "")
 
+    def get(self, column, default=None):
+        return getattr(self, column, default)
+
 
 class BibTeXHelperTests(unittest.TestCase):
     def test_escape_bibtex_escapes_special_characters(self):
@@ -296,10 +299,42 @@ class FlaskRouteTests(unittest.TestCase):
             render.call_args.kwargs["bibtex"], app_module._create_bibtex(reference)
         )
 
-    def test_show_missing_reference_passes_none_bibtex_to_template(self):
+    def test_show_missing_reference_returns_not_found(self):
         with patch.object(app_module, "get_source", return_value=None):
-            with self.assertRaises(AttributeError):
-                self.client.get("/ref/999")
+            response = self.client.get("/ref/999")
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_edit_reference_updates_values_and_redirects(self):
+        reference = ReferenceData(
+            id=17, type="Book", name="Old title", author="Old author",
+            publish_year=2000
+        )
+        form = {
+            "type": "Book",
+            "name": "New title",
+            "author": "New author",
+            "publish_year": "2024",
+        }
+        with patch.object(app_module, "get_source", return_value=reference), patch.object(
+            app_module, "update_source"
+        ) as update_source:
+            response = self.client.post("/ref/17/edit", data=form)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/ref/17")
+        update_source.assert_called_once()
+
+    def test_delete_reference_hides_it_and_redirects(self):
+        reference = ReferenceData(id=17, type="Book", name="A Book")
+        with patch.object(app_module, "get_source", return_value=reference), patch.object(
+            app_module, "hide_source"
+        ) as hide_source:
+            response = self.client.post("/ref/17/delete")
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/")
+        hide_source.assert_called_once_with(17)
 
 
 if __name__ == "__main__":

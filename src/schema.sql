@@ -32,5 +32,6 @@ CREATE TABLE sources (
 
     keywords TEXT,
     note TEXT,
-    extra_fields TEXT
+    extra_fields TEXT,
+    hidden INTEGER DEFAULT 0
 );

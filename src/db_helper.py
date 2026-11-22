@@ -36,7 +36,8 @@ def setup_db():
 def get_source(source_id):
    sql = """SELECT *
             FROM sources
-            WHERE id = :source_id"""
+            WHERE id = :source_id
+              AND COALESCE(hidden, 0) = 0"""
    result = db.session.execute(text(sql), {"source_id":source_id})
    return result.mappings().first() if result else None
 
@@ -55,8 +56,43 @@ def add_source(values):
 def get_all_sources():
    sql = """SELECT id, name, type, author, publish_year, pages
             FROM sources
+            WHERE COALESCE(hidden, 0) = 0
             ORDER BY id ASC"""
    return db.session.execute(text(sql)).fetchall()
+
+
+def update_source(source_id, values):
+   # The explicit list also protects updates from accepting unknown SQL identifiers.
+   allowed_fields = {
+      "name", "type", "citation_key", "author", "editor", "organization",
+      "school", "publisher", "publish_year", "publication_date", "access_date",
+      "howpublished", "journal", "booktitle", "volume", "number", "issue",
+      "chapter", "pages", "series", "doi", "isbn", "issn", "url", "keywords",
+      "note", "extra_fields"
+   }.intersection(values)
+   if not allowed_fields:
+      return
+
+   assignments = ", ".join(
+      f"{field} = :{field}" for field in sorted(allowed_fields)
+   )
+   sql = f"UPDATE sources SET {assignments} WHERE id = :source_id"
+   parameters = dict(values)
+   parameters["source_id"] = source_id
+   db.session.execute(text(sql), parameters)
+   db.session.commit()
+
+
+def hide_source(source_id):
+   sql = """UPDATE sources
+            SET hidden = 1
+            WHERE id = :source_id"""
+   db.session.execute(text(sql), {"source_id": source_id})
+   db.session.commit()
+
+
+def delete_source(source_id):
+   hide_source(source_id)
 
 if __name__ == "__main__":
    with app.app_context():
