@@ -16,6 +16,17 @@ dependencies = [
 [dependency-groups]
 dev = [
     "coverage>=7.17.3",
+    "pylint>=4.1.4",
     "robotframework-browser>=21.0.0",
     "robotframework-browser-batteries>=21.0.0",
+]
+
+[tool.pylint.messages_control]
+disable = ["all"]
+enable = [
+    "unused-import",
+    "unused-variable",
+    "undefined-variable",
+    "redefined-outer-name",
+    "broad-exception-caught",
 ]

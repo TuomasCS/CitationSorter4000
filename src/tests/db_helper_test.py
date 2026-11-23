@@ -1,6 +1,4 @@
-import sys
 import unittest
-from pathlib import Path
 from unittest.mock import patch
 
 import src.db_helper as db_helper

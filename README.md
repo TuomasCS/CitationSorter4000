@@ -13,6 +13,18 @@ Definition of done:
 
 [Ryhmän pelisäännöt](pelisaannot.md)
 
+## Style and lint checks
+
+Run the configured Pylint checks locally from the repository root:
+
+```bash
+uv run pylint src
+```
+
+The CI pipeline runs the same check. The current Pylint configuration rejects
+unused imports and variables, undefined variables, variables that shadow an
+outer scope, and broadly caught exceptions.
+
 Product backlog:
 https://github.com/users/TuomasCS/projects/1
 
