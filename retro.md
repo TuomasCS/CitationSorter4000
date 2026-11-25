@@ -1,4 +1,4 @@
-Retrospective 1
+## Retrospective sprint 1
 
 Everyone listed 1 negative, 1 positive and 1 constructive feedback about sprint 1.
 
@@ -21,3 +21,17 @@ Improvements:
 -Keep the github issues updated with your work.
 
 -Better communication. 
+
+## Retrospective sprint 2
+
+Positive:
+
+- Better preparation and presentation
+
+- All planned user stories implemented
+
+- Got working CI service
+
+Improvment:
+
+- Need better testing and more tests
