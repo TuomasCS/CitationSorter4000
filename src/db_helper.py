@@ -1,36 +1,42 @@
 from src.config import db, app
-from sqlalchemy import inspect, text
+from sqlalchemy import text
 import os
-import sqlite3
-from contextlib import closing
 
+
+def tables():
+  """Returns all table names from the database"""
+  sql = text(
+    "SELECT name FROM sqlite_master "
+    "WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
+  )
+
+  result = db.session.execute(sql)
+  return [row[0] for row in result.fetchall()]
 
 def setup_db():
-   """Create the sources table or add missing nullable columns, preserving data."""
-   schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
-   with open(schema_path, 'r', encoding='utf-8') as f:
-      schema_sql = f.read().strip()
+  """
+    Creating the database
+    If database tables already exist, those are dropped before the creation
+  """
+  tables_in_db = tables()
+  if len(tables_in_db) > 0:
+    print(f"Tables exist, dropping: {', '.join(tables_in_db)}")
+    for table in tables_in_db:
+      sql = text(f"DROP TABLE {table}")
+      db.session.execute(sql)
+    db.session.commit()
 
-   inspector = inspect(db.engine)
-   if not inspector.has_table("sources"):
-      db.session.execute(text(schema_sql))
-   else:
-      # Read the expected columns without changing the existing database.
-      with closing(sqlite3.connect(":memory:")) as schema_db:
-         schema_db.executescript(schema_sql)
-         schema_columns = schema_db.execute("PRAGMA table_info(sources)").fetchall()
+  print("Creating database")
+  
+  # Read schema from schema.sql file
+  schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
+  with open(schema_path, 'r') as f:
+    schema_sql = f.read().strip()
+  
+  sql = text(schema_sql)
+  db.session.execute(sql)
+  db.session.commit()
 
-      existing = {column["name"] for column in inspector.get_columns("sources")}
-      missing = [column for column in schema_columns if column[1] not in existing]
-      if any(column[3] or column[5] for column in missing):
-         raise ValueError("Cannot automatically add required or primary-key columns.")
-
-      quote = db.engine.dialect.identifier_preparer.quote
-      for _, column, sql_type, _, _, _ in missing:
-         sql = f"ALTER TABLE sources ADD COLUMN {quote(column)} {sql_type}"
-         db.session.execute(text(sql))
-
-   db.session.commit()
 
 
 def get_source(source_id):
