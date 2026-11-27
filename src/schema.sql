@@ -11,7 +11,7 @@ CREATE TABLE sources (
     publisher TEXT,
 
     publish_year INTEGER,
-    publication_date TEXT,
+    publish_month TEXT,
     access_date TEXT,
     howpublished TEXT,
 

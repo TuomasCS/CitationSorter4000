@@ -2,103 +2,110 @@ REFERENCE_FIELD_SCHEMAS = {
     "article": {
         "required": ["name", "author"],
         "optional": [
-            "journal", "publish_year", "volume",
-            "number", "pages"
+            "journal", "publish_year", "publish_month",
+            "volume", "number", "pages", "doi", "url", "isbn", "issn", "note"
         ]
     },
 
     "book": {
         "required": ["name", "author"],
-        "optional": ["publisher", "publish_year", "chapter"]
+        "optional": [
+            "publisher", "publish_year", "chapter",
+            "doi", "url", "isbn", "issn", "note"
+        ]
     },
 
     "booklet": {
         "required": ["name", "author"],
         "optional": [
-            "howpublished",
-            "publication_date", "publish_year"
+            "howpublished", "publish_year", "publish_month",
+            "doi", "url", "isbn", "issn", "note"
         ]
     },
 
     "inbook": {
         "required": ["name", "author"],
         "optional": [
-            "booktitle", "publish_year",
-            "publisher", "pages"
+            "booktitle", "publish_year", "publisher", "pages",
+            "doi", "url", "isbn", "issn", "note"
         ]
     },
 
     "incollection": {
         "required": ["name", "author"],
         "optional": [
-            "editor", "booktitle", "publish_year",
-            "publisher", "pages"
+            "editor", "booktitle", "publish_year", "publisher", "pages",
+            "doi", "url", "isbn", "issn", "note"
         ]
     },
 
     "inproceedings": {
         "required": ["name", "author"],
         "optional": [
-            "booktitle", "series", "publish_year",
-            "pages", "publisher"
+            "booktitle", "series", "publish_year", "pages", "publisher",
+            "doi", "url", "isbn", "issn", "note"
         ]
     },
 
     "manual": {
         "required": ["name", "author"],
         "optional": [
-            "organization", "publish_year"
+            "organization", "publish_year", "doi", "url", "isbn", "issn", "note"
         ]
     },
 
     "mastersthesis": {
         "required": ["name", "author"],
         "optional": [
-            "school", "publish_year", "publication_date"
+            "school", "publish_year", "publish_month",
+            "doi", "url", "isbn", "issn", "note"
         ]
     },
 
     "misc": {
         "required": ["name", "author"],
         "optional": [
-            "howpublished",
-            "publish_year", "note"
+            "howpublished", "publish_year",
+            "doi", "url", "isbn", "issn", "note"
         ]
     },
 
     "phdthesis": {
         "required": ["name", "author"],
         "optional": [
-            "school", "publish_year", "publication_date"
+            "school", "publish_year", "publish_month",
+            "doi", "url", "isbn", "issn", "note"
         ]
     },
 
     "proceedings": {
         "required": ["name", "author"],
         "optional": [
-            "editor", "series", "volume",
-            "publisher", "publish_year"
+            "editor", "series", "volume", "publisher", "publish_year",
+            "doi", "url", "isbn", "issn", "note"
         ]
     },
 
     "techreport": {
         "required": ["name", "author"],
         "optional": [
-            "organization", "number",
-            "publish_year", "publication_date"
+            "organization", "number", "publish_year", "publish_month",
+            "doi", "url", "isbn", "issn", "note"
         ]
     },
 
     "unpublished": {
         "required": ["name", "author"],
-        "optional": ["publish_year"]
+        "optional": [
+            "publish_year", "doi", "url", "isbn", "issn", "note"
+        ]
     },
 
     "online": {
         "required": ["name", "author"],
         "optional": [
-            "publish_year", "organization",
-            "url", "access_date"
+            "publish_year", "organization", "url",
+            "doi", "isbn", "issn", "note"
         ]
     }
 }
@@ -134,15 +141,13 @@ FIELD_LABELS = {
         "publisher": "Publisher",
 
         "publish_year": "Year",
-        "publication_date": "Date",
-        "access_date": "URLDate",
+        "publish_month": "Month",
         "howpublished": "HowPublished",
 
         "journal": "Journal",
         "booktitle": "BookTitle",
         "volume": "Volume",
         "number": "Number",
-        "issue": "Issue",
         "chapter": "Chapter",
         "pages": "Pages",
         "series": "Series",
@@ -153,6 +158,11 @@ FIELD_LABELS = {
         "url": "URL",
 
         "keywords": "Keywords",
-        "note": "Notes",
+        "note": "Note",
         "extra_fields": "Additional Fields",
     }
+
+def bibtex_field_to_table_field(field):
+    for column in FIELD_LABELS:
+        if field == FIELD_LABELS[column].lower():
+            return column
