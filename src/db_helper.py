@@ -60,7 +60,7 @@ def add_source(values):
 
 
 def get_all_sources():
-   sql = """SELECT id, name, type, author, publish_year, pages
+   sql = """SELECT *
             FROM sources
             WHERE COALESCE(hidden, 0) = 0
             ORDER BY id ASC"""

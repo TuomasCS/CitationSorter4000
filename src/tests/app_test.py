@@ -171,6 +171,38 @@ class FlaskRouteTests(unittest.TestCase):
         self.assertIn('<option value="author_asc" selected>', html)
         self.assertIn("Page count (fewest first)", html)
 
+    def test_export_all_renders_bibtex_for_every_reference(self):
+        references = [
+            ReferenceData(
+                type="Book", name="First Book", author="Ada Lovelace",
+                publish_year=1843, publisher="Example Press",
+            ),
+            ReferenceData(
+                type="Article", name="Second Paper", author="Grace Hopper",
+                publish_year=1952, journal="Computing",
+            ),
+        ]
+        with patch.object(app_module, "get_all_sources", return_value=references):
+            response = self.client.get("/export-all")
+
+        html = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("First Book", html)
+        self.assertIn("Second Paper", html)
+        self.assertIn("publisher = {Example Press}", html)
+        self.assertIn("journal = {Computing}", html)
+        self.assertIn('id="copy-all"', html)
+        self.assertIn("Back to main page", html)
+
+    def test_export_all_shows_empty_state_without_copy_button(self):
+        with patch.object(app_module, "get_all_sources", return_value=[]):
+            response = self.client.get("/export-all")
+
+        html = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("No references to export.", html)
+        self.assertNotIn('id="copy-all"', html)
+
     def test_create_reference_rejects_missing_title(self):
         form = {"name": "   ", "type": "Article", "author": "Ada Lovelace"}
         with patch.object(app_module, "get_all_sources", return_value=[]), patch.object(
