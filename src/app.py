@@ -1,5 +1,6 @@
 import re
 from urllib.parse import urlsplit
+import requests
 
 from flask import abort, redirect, render_template, request, url_for, flash
 from src.config import app
@@ -9,12 +10,12 @@ from src.db_helper import (
     get_source,
     hide_source,
     update_source,
-    setup_db,
 )
 from src.reference_config import (
     REFERENCE_FIELD_SCHEMAS,
     ENTRY_TYPE_ALIASES,
-    FIELD_LABELS
+    FIELD_LABELS,
+    bibtex_field_to_table_field,
 )
 
 SORT_OPTIONS = {
@@ -119,6 +120,64 @@ def _create_bibtex(reference): # converts the information into bibtex
     )
     return f"@{entry_type}{{{citation_key},\n{formatted_fields}\n}}"
 
+def _split_bibtex_items(text):
+    items = []
+    start = 0
+    brace_depth = 0
+    quote = None
+    index = 0
+
+    while index < len(text)-1:
+        char = text[index]
+
+        if quote and char == quote:
+            quote = None
+        elif char == '"':
+            quote = char
+        elif char == "{":
+            brace_depth += 1
+        elif char == "}" and brace_depth > 0:
+            brace_depth -= 1
+        elif char == "," and brace_depth == 0:
+            items.append(text[start:index].strip())
+            start = index + 1
+
+        index += 1
+
+    items.append(text[start:len(text)-1].strip())
+    return [item for item in items if item]
+
+
+def get_reference_from_doi(doi):
+    response = requests.get(
+        f"https://doi.org/{doi}",
+        headers={"Accept": "application/x-bibtex"},
+        timeout=10
+    )
+    value = response.text
+    info_start = value.find("{")
+    type = value[2:info_start]
+    info_list = _split_bibtex_items(value[info_start+1:len(value)-1])
+
+    reference = {"type": type}
+
+    for info in info_list:
+        if "=" not in info:
+            reference["citation_key"] = info.strip()
+            continue
+
+        field, field_value = info.split("=", 1)
+        field_value = field_value.strip()
+        if re.fullmatch(r"\{.*\}", field_value, flags=re.DOTALL):
+            field_value = re.sub(r"^\{|\}$", "", field_value)
+
+        table_field = bibtex_field_to_table_field(field.strip())
+
+        if table_field:
+            reference[table_field] = field_value.strip()
+
+    return reference
+    
 @app.template_filter("field_label")
 def field_label(column):
     labels = FIELD_LABELS
@@ -304,9 +363,6 @@ def show_reference(source_id):
 
     bibtex = _create_bibtex(reference)
     return render_template("reference.html", reference=reference, bibtex=bibtex, fields=fields+['type'])
-
-with app.app_context():
-    setup_db()
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)
