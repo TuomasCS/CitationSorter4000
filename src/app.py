@@ -1,4 +1,5 @@
 import re
+from collections.abc import Mapping
 from urllib.parse import urlsplit
 import requests
 
@@ -97,14 +98,24 @@ def _escape_bibtex(value): #converts character latex treats differently into saf
     return re.sub(r"[\\&%$#_{}~^]", lambda match: replacements[match.group()], str(value))
 
 
+def _reference_value(reference, field, default=""):
+    if isinstance(reference, Mapping):
+        return reference.get(field, default)
+    return getattr(reference, field, default)
+
+
 def _create_bibtex(reference): # converts the information into bibtex
-    reference_type = (reference.type or "").strip()
+    reference_type = (_reference_value(reference, "type") or "").strip()
 
     entry_type = ENTRY_TYPE_ALIASES.get(reference_type, "misc")
-    author = reference.author or ""
+    author = _reference_value(reference, "author") or ""
     author_name = author.split(" and ", 1)[0].strip()
     surname = author_name.split(",", 1)[0] if "," in author_name else author_name.split()[-1] if author_name else ""
-    key_parts = (surname, reference.publish_year, reference.name)
+    key_parts = (
+        surname,
+        _reference_value(reference, "publish_year"),
+        _reference_value(reference, "name"),
+    )
     citation_key = "".join(re.sub(r"[^A-Za-z0-9]", "", str(part)) for part in key_parts)
     citation_key = citation_key or "Reference"
 
@@ -112,8 +123,9 @@ def _create_bibtex(reference): # converts the information into bibtex
     fields = []
 
     for col in columns:
-        if reference[col]:
-            fields.append((field_label(col).lower(), reference[col]))
+        value = _reference_value(reference, col)
+        if value:
+            fields.append((field_label(col).lower(), value))
 
     formatted_fields = ",\n".join(
         f"  {field} = {{{_escape_bibtex(value)}}}" for field, value in fields
@@ -235,6 +247,18 @@ def index():
         sort_options=SORT_OPTIONS,
         sort_by=sort_by,
     )
+
+
+@app.route("/export-all")
+def export_all():
+    references = get_all_sources()
+    bibtex = "\n\n".join(_create_bibtex(reference) for reference in references)
+    return render_template(
+        "export_all.html",
+        bibtex=bibtex,
+        reference_count=len(references),
+    )
+
 
 @app.route("/create", methods=["GET", "POST"])
 def add_reference():

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Export all references</title>
+  </head>
+  <body>
+    <h1>Export all references</h1>
+    {% if reference_count %}
+      <p>Copy all your references as BibTeX:</p>
+      <textarea id="all-bibtex" rows="24" cols="100" readonly>{{ bibtex }}</textarea>
+      <p>
+        <button id="copy-all" type="button">Copy all</button>
+        <span id="copy-status" role="status" aria-live="polite"></span>
+      </p>
+    {% else %}
+      <p>No references to export.</p>
+    {% endif %}
+    <p><a href="/" role="button">Back to main page</a></p>
+
+    {% if reference_count %}
+      <script>
+        const bibtexText = document.getElementById("all-bibtex");
+        const copyStatus = document.getElementById("copy-status");
+
+        document.getElementById("copy-all").addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(bibtexText.value);
+            copyStatus.textContent = "Copied all BibTeX.";
+          } catch {
+            bibtexText.focus();
+            bibtexText.select();
+            const copied = document.execCommand("copy");
+            copyStatus.textContent = copied
+              ? "Copied all BibTeX."
+              : "Copy failed. Select the text and copy it manually.";
+          }
+        });
+      </script>
+    {% endif %}
+  </body>
+</html>

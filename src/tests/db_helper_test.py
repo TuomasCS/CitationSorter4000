@@ -121,7 +121,7 @@ class SourceQueryTests(DbHelperTests):
         mock_commit.assert_called_once_with()
 
     @patch("src.db_helper.db.session.execute")
-    def test_get_all_sources_returns_rows_and_selects_expected_fields(self, mock_execute):
+    def test_get_all_sources_returns_rows_with_all_fields(self, mock_execute):
         rows = [(1, "First", "book", "Author One", 2020, "1-10")]
         mock_execute.return_value.fetchall.return_value = rows
 
@@ -129,7 +129,7 @@ class SourceQueryTests(DbHelperTests):
 
         self.assertIs(result, rows)
         sql = str(mock_execute.call_args.args[0])
-        self.assertIn("id, name, type, author, publish_year, pages", sql)
+        self.assertIn("SELECT *", sql)
         self.assertIn("ORDER BY id ASC", sql)
         mock_execute.assert_called_once()
 

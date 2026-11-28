@@ -3,6 +3,7 @@
 On the main page, choose how to sort references by author, page count, type, or
 publication year. Page ranges such as `10--15` are sorted by their number of
 pages; references without a value for the selected criterion appear last.
+Use **Export all** to view all saved references as BibTeX and copy them together.
 
 Definition of done:
 
