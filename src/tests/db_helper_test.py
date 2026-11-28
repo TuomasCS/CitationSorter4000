@@ -13,116 +13,60 @@ class DbHelperTests(unittest.TestCase):
 
 class SetupDbTests(DbHelperTests):
     @patch("builtins.open", create=True)
+    @patch("src.db_helper.tables", return_value=[])
     @patch("src.db_helper.db.session.commit")
     @patch("src.db_helper.db.session.execute")
-    @patch("src.db_helper.inspect")
-    def test_creates_table_when_it_does_not_exist(
-        self, mock_inspect, mock_execute, mock_commit, mock_open
+    def test_creates_table_when_database_is_empty(
+        self, mock_execute, mock_commit, mock_tables, mock_open
     ):
         schema = "CREATE TABLE sources (id INTEGER PRIMARY KEY, name TEXT NOT NULL)"
         mock_open.return_value.__enter__.return_value.read.return_value = schema
-        mock_inspect.return_value.has_table.return_value = False
 
         db_helper.setup_db()
 
+        mock_tables.assert_called_once_with()
         mock_open.assert_called_once()
-        mock_inspect.return_value.has_table.assert_called_once_with("sources")
         mock_execute.assert_called_once()
         self.assertEqual(str(mock_execute.call_args.args[0]), schema)
         mock_commit.assert_called_once_with()
 
     @patch("builtins.open", create=True)
+    @patch("src.db_helper.tables", return_value=["sources"])
     @patch("src.db_helper.db.session.commit")
     @patch("src.db_helper.db.session.execute")
-    @patch("src.db_helper.inspect")
-    def test_adds_missing_nullable_column_to_existing_table(
-        self, mock_inspect, mock_execute, mock_commit, mock_open
-    ):
-        schema = (
-            "CREATE TABLE sources ("
-            "id INTEGER PRIMARY KEY, name TEXT NOT NULL, pages TEXT)"
-        )
-        mock_open.return_value.__enter__.return_value.read.return_value = schema
-        inspector = mock_inspect.return_value
-        inspector.has_table.return_value = True
-        inspector.get_columns.return_value = [
-            {"name": "id"},
-            {"name": "name"},
-        ]
-
-        db_helper.setup_db()
-
-        mock_inspect.assert_called_once()
-        inspector.get_columns.assert_called_once_with("sources")
-        mock_execute.assert_called_once()
-        self.assertIn(
-            "ALTER TABLE sources ADD COLUMN pages TEXT",
-            str(mock_execute.call_args.args[0]),
-        )
-        mock_commit.assert_called_once_with()
-
-    @patch("builtins.open", create=True)
-    @patch("src.db_helper.db.session.commit")
-    @patch("src.db_helper.db.session.execute")
-    @patch("src.db_helper.inspect")
-    def test_commits_without_altering_when_all_columns_exist(
-        self, mock_inspect, mock_execute, mock_commit, mock_open
+    def test_drops_existing_table_before_creating_schema(
+        self, mock_execute, mock_commit, mock_tables, mock_open
     ):
         schema = "CREATE TABLE sources (id INTEGER PRIMARY KEY, name TEXT)"
         mock_open.return_value.__enter__.return_value.read.return_value = schema
-        inspector = mock_inspect.return_value
-        inspector.has_table.return_value = True
-        inspector.get_columns.return_value = [{"name": "id"}, {"name": "name"}]
 
         db_helper.setup_db()
 
-        mock_execute.assert_not_called()
-        mock_commit.assert_called_once_with()
+        mock_tables.assert_called_once_with()
+        mock_open.assert_called_once()
+        self.assertEqual(mock_execute.call_count, 2)
+        statements = [str(call.args[0]) for call in mock_execute.call_args_list]
+        self.assertIn("DROP TABLE sources", statements)
+        self.assertIn(schema, statements)
+        self.assertEqual(mock_commit.call_count, 2)
 
     @patch("builtins.open", create=True)
+    @patch("src.db_helper.tables", return_value=["one", "two"])
     @patch("src.db_helper.db.session.commit")
     @patch("src.db_helper.db.session.execute")
-    @patch("src.db_helper.inspect")
-    def test_rejects_missing_required_column(
-        self, mock_inspect, mock_execute, mock_commit, mock_open
-    ):
-        schema = (
-            "CREATE TABLE sources ("
-            "id INTEGER PRIMARY KEY, name TEXT, required_value TEXT NOT NULL)"
-        )
-        mock_open.return_value.__enter__.return_value.read.return_value = schema
-        inspector = mock_inspect.return_value
-        inspector.has_table.return_value = True
-        inspector.get_columns.return_value = [{"name": "id"}, {"name": "name"}]
-
-        with self.assertRaisesRegex(
-            ValueError, "Cannot automatically add required or primary-key columns"
-        ):
-            db_helper.setup_db()
-
-        mock_execute.assert_not_called()
-        mock_commit.assert_not_called()
-
-    @patch("builtins.open", create=True)
-    @patch("src.db_helper.db.session.commit")
-    @patch("src.db_helper.db.session.execute")
-    @patch("src.db_helper.inspect")
-    def test_rejects_missing_primary_key_column(
-        self, mock_inspect, mock_execute, mock_commit, mock_open
+    def test_drops_each_existing_table_before_creating_schema(
+        self, mock_execute, mock_commit, mock_tables, mock_open
     ):
         schema = "CREATE TABLE sources (id INTEGER PRIMARY KEY, name TEXT)"
         mock_open.return_value.__enter__.return_value.read.return_value = schema
-        inspector = mock_inspect.return_value
-        inspector.has_table.return_value = True
-        inspector.get_columns.return_value = [{"name": "name"}]
 
-        with self.assertRaisesRegex(
-            ValueError, "Cannot automatically add required or primary-key columns"
-        ):
-            db_helper.setup_db()
+        db_helper.setup_db()
 
-        mock_execute.assert_not_called()
-        mock_commit.assert_not_called()
+        statements = [str(call.args[0]) for call in mock_execute.call_args_list]
+        self.assertIn("DROP TABLE one", statements)
+        self.assertIn("DROP TABLE two", statements)
+        self.assertIn(schema, statements)
+        self.assertEqual(mock_commit.call_count, 2)
 
 
 class SourceQueryTests(DbHelperTests):
